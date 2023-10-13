@@ -18,15 +18,17 @@ app.layout = html.Div([
             value='Enter ASCII text here',
             style={'width': '100%', 'height': 100},
         ),
-        html.Div(id=config.ascii_to_morse_text_area_id_output, style={'width': '100%'}),
+        html.Div(id=config.ascii_to_morse_text_area_id_output, style={'width': '80%',  'overflow-wrap': 'break-word'}),
         dcc.Textarea(
             id=config.morse_to_ascii_text_area_id,
             value=mm.get_morse('Enter ASCII text here'),
             style={'width': '100%', 'height': 100},
         ),
-        html.Div(id=config.morse_to_ascii_text_area_id_output, style={'width': '100%'}),
+        html.Div(id=config.morse_to_ascii_text_area_id_output, style={'width': '80%', 'overflow-wrap': 'break-word'}),
     ])
 ])
+
+
 
 
 @app.callback(

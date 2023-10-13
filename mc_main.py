@@ -13,7 +13,7 @@ debug = False
 
 class MorseMain:
     """Translate ASCII to morse code and generate tones.
-    
+
     Typical usage:
         mm = MorseMain()
         mm.api_output_tone(mm.get_morse('hello world')
@@ -21,7 +21,7 @@ class MorseMain:
         # use all caps if you don't need to differentiate between upper and lower case letters:
         mm.api_output_tone(mm.get_morse('HELLO WORLD')
         '...././.-../.-../---/ /.--/---/.-./.-../-../'
-        
+
     """
 
     @functools.cached_property
@@ -202,7 +202,7 @@ class MorseMain:
         cw = []
         for dahdit in morse:
             if dahdit == ".":
-                dah_dur = .25
+                dah_dur = .25  # seconds to play sound
                 if fq > bitrate:
                     bitrate = fq + 100
                 dah_frame = int(bitrate * dah_dur)
@@ -214,7 +214,7 @@ class MorseMain:
                     wave_data = wave_data + chr(128)
                 cw.append(wave_data)
             elif dahdit == "-":
-                dah_dur = .75
+                dah_dur = .75  # seconds to play sound
                 if fq > bitrate:
                     bitrate = fq + 100
                 dah_frame = int(bitrate * dah_dur)
