@@ -3,18 +3,33 @@ import config
 import functools
 import pandas
 from typing import Tuple
+import json
+import binascii
+import pyaudio
+import math
 
-debug = True
+debug = False
 
 
 class MorseMain:
+    """Translate ASCII to morse code and generate tones.
+    
+    Typical usage:
+        mm = MorseMain()
+        mm.api_output_tone(mm.get_morse('hello world')
+        '...._/._/.-.._/.-.._/---_/ /.--_/---_/.-._/.-.._/-.._/'
+        # use all caps if you don't need to differentiate between upper and lower case letters:
+        mm.api_output_tone(mm.get_morse('HELLO WORLD')
+        '...././.-../.-../---/ /.--/---/.-./.-../-../'
+        
+    """
 
     @functools.cached_property
     def ascii_character_index(self):
         return [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
             'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', ',', '.', '?', ';', ':',
-            "'", '-', '/', '\\', '(', ')', '_', '!',
+            "'", "\"", '-', '/', '\\', '(', ')', '_', '!',
         ]
 
     @functools.cached_property
@@ -29,7 +44,8 @@ class MorseMain:
                     {'1': '.----'}, {'2': '..---'}, {'3': '...--'}, {'4': '....-'}, {'5': '.....'}, {'6': '-....'},
                     {'7': '--...'}, {'8': '---..'}, {'9': '----.'}, {' ': ' '}, {',': '--..--'}, {'.': '.-.-.-'},
                     {'?': '..--..'}, {';': '-.-.-.'}, {':': '---...'}, {"'": '.----.'}, {'-': '-....-'}, {'/': '-..-.'},
-                    {"\\": "\\"}, {'(': '-.--.-'}, {')': '-.--.-'}, {'_': '..--.-'}, {'!': '-.-.--'}],
+                    {"\\": "\\"}, {'(': '-.--.-'}, {')': '-.--.-'}, {'_': '..--.-'}, {'!': '-.-.--'}, {"\"": '........'}
+                ],
             "MORSE":
                 [
                     {'.-': 'A'}, {'-...': 'B'}, {'-.-.': 'C'}, {'-..': 'D'}, {'.': 'E'}, {'..-.': 'F'}, {'--.': 'G'},
@@ -39,7 +55,7 @@ class MorseMain:
                     {'.----': '1'}, {'..---': '2'}, {'...--': '3'}, {'....-': '4'}, {'.....': '5'}, {'-....': '6'},
                     {'--...': '7'}, {'---..': '8'}, {'----.': '9'}, {' ': ' '}, {'--..--': ','}, {'.-.-.-': '.'},
                     {'..--..': '?'}, {'-.-.-.': ';'}, {'---...': ':'}, {'.----.': "'"}, {'-....-': '-'}, {'-..-.': '/'},
-                    {"\\": "\\"}, {'-.--.-': '('}, {'-.--.-': ')'}, {'..--.-': '_'}, {'-.-.--': '!'}
+                    {"\\": "\\"}, {'-.--.-': '('}, {'-.--.-': ')'}, {'..--.-': '_'}, {'-.-.--': '!'}, {"\"": '........'}
                 ]
         }
 
@@ -139,19 +155,24 @@ class MorseMain:
             v = self.get_morse(value[:len(value) - 1:]) + '\n'
         else:
             v = self.get_morse(value)
-        return \
-            "{" \
-            f"ascii: {value}," \
-            f"ascii_binary: {self.string_to_binary(value)}," \
-            f"morse: {v}," \
-            f"morse_binary: {self.string_to_binary(v)}" \
-            "}"
+        return json.dumps(
+            {
+                "ascii": value,
+                "ascii_binary": self.string_to_binary(value),
+                "morse": v,
+                "morse_binary": self.string_to_binary(v),
+                "ascii_base64": binascii.b2a_base64(value.encode('utf-8'), newline=False).decode('utf-8'),
+                "ascii_binary_base64": binascii.b2a_base64(self.string_to_binary(value).encode('utf-8'), newline=False).decode('utf-8'),
+                "morse_base64": binascii.b2a_base64(v.encode('utf-8'), newline=False).decode('utf-8'),
+                "morse_binary_base64": binascii.b2a_base64(self.string_to_binary(v).encode('utf-8'), newline=False).decode('utf-8')
+            }
+        )
 
     def api_output_ascii(self, value: str) -> str:
         """Output ASCII for dash app debug."""
         if config.debug:
-            print(len(value))
-        if len(value) > 0 and value[len(value) - 1] == '\n':
+            print(value[len(value) - 2] + value[len(value) - 1])
+        if len(value) > 0 and value[len(value) - 2] + value[len(value) - 1] == '\n':
             new_line = True
         else:
             new_line = False
@@ -159,10 +180,68 @@ class MorseMain:
             v = self.get_ascii(value[:len(value) - 1:]) + '\n'
         else:
             v = self.get_ascii(value)
-        return \
-            "{" \
-            f"ascii: {v}," \
-            f"ascii_binary: {self.string_to_binary(v)}\"," \
-            f"morse: {value}\"," \
-            f"morse_binary: {self.string_to_binary(value)}\"" \
-            "}"
+        return json.dumps(
+            {
+                "ascii": v,
+                "ascii_binary": self.string_to_binary(v),
+                "morse": value,
+                "morse_binary": self.string_to_binary(value),
+                "ascii_base64": binascii.b2a_base64(v.encode('utf-8'), newline=False).decode('utf-8'),
+                "ascii_binary_base64": binascii.b2a_base64(self.string_to_binary(v).encode('utf-8'),
+                                                           newline=False).decode('utf-8'),
+                "morse_base64": binascii.b2a_base64(value.encode('utf-8'), newline=False).decode('utf-8'),
+                "morse_binary_base64": binascii.b2a_base64(self.string_to_binary(value).encode('utf-8'),
+                                                           newline=False).decode('utf-8')
+            }
+        )
+
+    def api_output_tone(self, morse):
+        pa = pyaudio.PyAudio
+        bitrate = 5000
+        fq = 641
+        cw = []
+        for dahdit in morse:
+            if dahdit == ".":
+                dah_dur = .25
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dah_frame = int(bitrate * dah_dur)
+                dah_rest_frame = dah_frame % bitrate
+                wave_data = ''
+                for x in range(dah_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / fq) / math.pi)) * 127 + 128))
+                for x in range(dah_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+            elif dahdit == "-":
+                dah_dur = .75
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dah_frame = int(bitrate * dah_dur)
+                dah_rest_frame = dah_frame % bitrate
+                wave_data = ''
+                for x in range(dah_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / fq) / math.pi)) * 127 + 128))
+                for x in range(dah_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+            elif dahdit == "/":
+                letter_dur = 1  # seconds to play sound
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dah_frame = int(bitrate * letter_dur)
+                dah_rest_frame = dah_frame % bitrate
+                wave_data = ''
+                for x in range(dah_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / .01) / math.pi)) * 127 + 128))
+                for x in range(dah_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+
+        p = pa()
+        stream = p.open(format=p.get_format_from_width(1), channels=2, rate=bitrate, output=True)
+        for i in cw:
+            stream.write(i)
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
