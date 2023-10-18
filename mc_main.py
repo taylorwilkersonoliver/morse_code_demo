@@ -202,15 +202,15 @@ class MorseMain:
         cw = []
         for dahdit in morse:
             if dahdit == ".":
-                dah_dur = .25  # seconds to play sound
+                dit_dur = .25  # seconds to play sound
                 if fq > bitrate:
                     bitrate = fq + 100
-                dah_frame = int(bitrate * dah_dur)
-                dah_rest_frame = dah_frame % bitrate
+                dit_frame = int(bitrate * dit_dur)
+                dit_rest_frame = dit_frame % bitrate
                 wave_data = ''
-                for x in range(dah_frame):
+                for x in range(dit_frame):
                     wave_data = wave_data + chr(int(math.sin(x / ((bitrate / fq) / math.pi)) * 127 + 128))
-                for x in range(dah_rest_frame):
+                for x in range(dit_rest_frame):
                     wave_data = wave_data + chr(128)
                 cw.append(wave_data)
             elif dahdit == "-":
@@ -229,12 +229,12 @@ class MorseMain:
                 letter_dur = 1  # seconds to play sound
                 if fq > bitrate:
                     bitrate = fq + 100
-                dah_frame = int(bitrate * letter_dur)
-                dah_rest_frame = dah_frame % bitrate
+                letter_frame = int(bitrate * letter_dur)
+                letter_rest_frame = letter_frame % bitrate
                 wave_data = ''
-                for x in range(dah_frame):
+                for x in range(letter_frame):
                     wave_data = wave_data + chr(int(math.sin(x / ((bitrate / .01) / math.pi)) * 127 + 128))
-                for x in range(dah_rest_frame):
+                for x in range(letter_rest_frame):
                     wave_data = wave_data + chr(128)
                 cw.append(wave_data)
 
@@ -284,12 +284,12 @@ class MorseMain:
             elif dahdit == "/":
                 if fq > bitrate:
                     bitrate = fq + 100
-                dah_frame = int(bitrate * letter_dur)
-                dah_rest_frame = dah_frame % bitrate
+                letter_frame = int(bitrate * letter_dur)
+                letter_rest_frame = letter_frame % bitrate
                 wave_data = ''
-                for x in range(dah_frame):
+                for x in range(letter_frame):
                     wave_data = wave_data + chr(int(math.sin(x / ((bitrate / fq) / math.pi)) * 127 + 128))
-                for x in range(dah_rest_frame):
+                for x in range(letter_rest_frame):
                     wave_data = wave_data + chr(128)
                 cw.append(wave_data)
 
