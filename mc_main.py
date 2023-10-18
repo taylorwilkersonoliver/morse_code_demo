@@ -300,7 +300,3 @@ class MorseMain:
         stream.stop_stream()
         stream.close()
         p.terminate()
-
-# ...let's see if this works...
-# MorseMain().api_output_tone_fscw(mm.get_morse('That coding zone where I start to ignore all life around me.'), -0.14)
-# Now, watch the first Transformers movie from 2007...
