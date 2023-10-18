@@ -245,3 +245,58 @@ class MorseMain:
         stream.stop_stream()
         stream.close()
         p.terminate()
+
+    def api_output_tone_fscw(self, morse, extend_duration=0):
+        pa = pyaudio.PyAudio
+        bitrate = 19600
+        fq = 641
+        fq_shift = 100
+        fq_raise = 300
+        dah_fq = fq + fq_raise - fq_shift
+        dit_fq = fq + fq_raise + fq_shift
+        dah_dur = .15 + extend_duration
+        dit_dur = .15 + extend_duration
+        letter_dur = .15 + extend_duration
+        cw = []
+        for dahdit in morse:
+            if dahdit == ".":
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dit_frame = int(bitrate * dit_dur)
+                dit_rest_frame = dit_frame % bitrate
+                wave_data = ''
+                for x in range(dit_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / dit_fq) / math.pi)) * 127 + 128))
+                for x in range(dit_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+            elif dahdit == "-":
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dah_frame = int(bitrate * dah_dur)
+                dah_rest_frame = dah_frame % bitrate
+                wave_data = ''
+                for x in range(dah_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / dah_fq) / math.pi)) * 127 + 128))
+                for x in range(dah_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+            elif dahdit == "/":
+                if fq > bitrate:
+                    bitrate = fq + 100
+                dah_frame = int(bitrate * letter_dur)
+                dah_rest_frame = dah_frame % bitrate
+                wave_data = ''
+                for x in range(dah_frame):
+                    wave_data = wave_data + chr(int(math.sin(x / ((bitrate / fq) / math.pi)) * 127 + 128))
+                for x in range(dah_rest_frame):
+                    wave_data = wave_data + chr(128)
+                cw.append(wave_data)
+
+        p = pa()
+        stream = p.open(format=p.get_format_from_width(1), channels=2, rate=bitrate, output=True)
+        for i in cw:
+            stream.write(i)
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
